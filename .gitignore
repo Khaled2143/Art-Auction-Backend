@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual Environment
+venv/
+env/
+*.env
+
+# Logs
+*.log
+
+# Other
+*.db
+*.sqlite3
+*.bak
+*.swp
+*.swo
+
+# Compiled files
+*.pyc
+
+# Local configuration
+instance/
+config.py
+
+# IDE-specific files
+.idea/
+.vscode/
