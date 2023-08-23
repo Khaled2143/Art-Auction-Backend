@@ -1,2 +1,0 @@
-class Guest:
-    SessionID: str
