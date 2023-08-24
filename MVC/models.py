@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
@@ -8,7 +8,7 @@ db = SQLAlchemy()
 class ArtWork(db.Model):
     __tablename__ = 'art_work'
     id: int = db.Column(db.Integer, primary_key=True)
-    creation_date: datetime = db.Column(db.Date, nullable=False)
+    creation_date: date = db.Column(db.Date, nullable=False)
     dimension: str = db.Column(db.String(50), nullable=False)
     description: str = db.Column(db.String(500), nullable=False)
     image: str = db.Column(db.String(100), nullable=False)
