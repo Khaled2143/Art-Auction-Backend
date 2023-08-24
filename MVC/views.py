@@ -9,21 +9,30 @@ from MVC.models import Buyer
 def place_bid(artwork_id, buyer_id, bid_amount):
     artwork = get_artwork_by_id(artwork_id)
 
+    
+
     if not artwork:
         return jsonify({'message': 'Artwork not found!'})
     
     buyer = get_buyer_by_id(buyer_id)
 
-    if not buyer:
-        return jsonify({'message': 'Buyer not found!'})
+    # if not buyer:
+    #     return jsonify({'message': 'Buyer not found!'})
     
-    if bid_amount <= artwork.price:
+    bid_amount = float(bid_amount)
+
+    if bid_amount <= artwork.current_bid:
         return jsonify({'message': 'Bid amount should be greater than the current price!'})
     
-    artwork.pprice = bid_amount
     artwork.buyer = buyer
-    artwork.highest_bid = bid_amount
+    artwork.current_bid = bid_amount
 
+    from MVC.models import db
+    db.session.commit()
+
+    return jsonify({'message': 'Bid placed successfully!'})
+
+    
 
 # Get Requests
 
@@ -58,7 +67,7 @@ def get_artist_by_name(name):
     return Artist.query.filter_by(name=name).first()
 
 def get_buyer_by_id(id):
-    return Buyer.query.filter_by(id=id).first()
+    return Buyer.query.filter_by(buyer_id=id).first()
 
 def get_buyer_by_name(name):
     return Buyer.query.filter_by(name=name).first()
@@ -103,7 +112,7 @@ def add_artwork():
     artwork = ArtWork(title=artwork_data['title'],
                       artist=artist, creation_date=date.today(),
                       starting_price=artwork_data['price'], 
-                      highest_bid=artwork_data['price'],
+                      current_bid=artwork_data['price'],
                       description=artwork_data['description'], 
                       dimension=artwork_data['dimension'], 
                       image=artwork_data['image'])

@@ -14,7 +14,7 @@ class ArtWork(db.Model):
     image: str = db.Column(db.String(100), nullable=False)
     title: str = db.Column(db.String(50), nullable=False)
     starting_price: float = db.Column(db.Float, nullable=False)
-    highest_bid: float = db.Column(db.Float, nullable=False)
+    current_bid: float = db.Column(db.Float, nullable=False)
     artist_id: int = db.Column(db.Integer, db.ForeignKey('artist.id'), nullable=False)
 
     #make get_art_work_by_id() method
@@ -28,7 +28,6 @@ class Artist(db.Model):
     phone_number: str = db.Column(db.String(50), nullable=False)
 
     art_works = db.relationship('ArtWork', backref='artist', lazy=True)
-    listings = db.relationship('Listings', backref='artist', lazy=True)
 
 
 @dataclass
