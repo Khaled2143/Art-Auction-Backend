@@ -7,9 +7,10 @@
 
 {
     "title" : "The Old Guitarist", 
-    "creation_date" : "1405-11-5"
+    "creation_date" : "1405-11-5",
     "price" : 1000000, 
     "description" : "This is a description", 
     "dimension" : "10X10", 
-    "image" : "image"
+    "image" : "image",
+    "artist" : "Pablo Picasso"
 }

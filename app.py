@@ -16,5 +16,6 @@ def create_app():
     app.add_url_rule('/artist', view_func=views.get_artist)
     app.add_url_rule('/artwork', view_func=views.get_artwork)
     app.add_url_rule('/add-artist', view_func=views.add_artist, methods=['POST'])
+    app.add_url_rule('/add-artwork', view_func=views.add_artwork, methods=['POST'])
 
     return app
