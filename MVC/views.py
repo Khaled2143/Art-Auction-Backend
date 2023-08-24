@@ -1,5 +1,7 @@
 from flask import request, jsonify
 from datetime import date
+from werkzeug.utils import secure_filename
+import os
 from MVC.models import Artist
 from MVC.models import ArtWork
 
@@ -12,6 +14,13 @@ def get_artwork():
 
 
 # Post Requests
+
+UPLOAD_FOLDER = 'uploaded_images'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Add Artist
 def add_artist():
@@ -26,9 +35,18 @@ def add_artist():
 
 # Add Artwork
 def add_artwork():
-    artwork_data = request.get_json()
+    artwork_data = request.form.to_dict()
     
     artist = Artist.query.filter_by(name=artwork_data['artist']).first()
+
+    image = request.files['image']
+    if image and allowed_file(image.filename):
+        filename = secure_filename(image.filename)
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        if not os.path.exists(UPLOAD_FOLDER):
+            os.makedirs(UPLOAD_FOLDER)
+        image.save(filepath)
+        artwork_data['image'] = filepath
 
     artwork = ArtWork(title=artwork_data['title'],
                       artist=artist, creation_date=date.today(),

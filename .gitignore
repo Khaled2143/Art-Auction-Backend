@@ -24,6 +24,7 @@ env/
 
 # Local configuration
 instance/
+uploaded_images/
 config.py
 
 # IDE-specific files
