@@ -50,14 +50,15 @@ def place_bid(artwork_id, user_id, bid_amount):
 # login request
 
 def login():
-    data = request.json
+    data = request.form.to_dict()
     username = data.get('username')
     password = data.get('password')
 
     # loads user 
-    user = User.query.filter_by(username=username).first()
+    user = get_user_by_username(username)
+    email = get_user_by_email(data.get('email'))
 
-    if user and check_password_hash(user.password_hash, password):
+    if (user or email) and check_password_hash(user.password_hash, password):
         response = {"message": "Login successful"}
         session['username'] = user.username # Store the username in the session
         return jsonify(response), 200
@@ -81,6 +82,9 @@ def get_user_by_id(id):
 
 def get_user_by_username(username):
     return User.query.filter_by(username=username).first()
+
+def get_user_by_email(email):
+    return User.query.filter_by(email=email).first()
 
 def get_artwork():
     return ArtWork.query.all()
@@ -124,9 +128,12 @@ def add_artwork():
 
     if not session.get('username'):
         return jsonify({'message': 'You need to be logged in to add an artwork!'})
+    
+    username = session.get('username')
+
     artwork_data = request.form.to_dict()
     
-    user = User.query.filter_by(name=artwork_data['user']).first()
+    user = get_user_by_username(username)
 
     image = request.files['image']
     if image and allowed_file(image.filename):
@@ -151,10 +158,10 @@ def add_artwork():
 
 # Add User
 def add_user():
-    user_data = request.get_json()
+    user_data = request.form.to_dict()
 
     # check if the  username is in the database
-    user = User.query.filter_by(name=user_data['user']).first()
+    user = User.query.filter_by(username=user_data['username']).first()
    
     if user:
         return jsonify({"message": "This username is already in use"}), 400

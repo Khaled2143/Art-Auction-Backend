@@ -6,11 +6,13 @@
 }
 
 {
-    "title" : "The Old Guitarist", 
-    "creation_date" : "1405-11-5",
-    "price" : 1000000, 
-    "description" : "This is a description", 
-    "dimension" : "10X10", 
-    "image" : "image",
-    "artist" : "Pablo Picasso"
+    title:The Old Guitarist
+    price:1000000
+    image:image
+    user:Pablo Picasso
 }
+
+username : my-user
+email : example@123.com
+password : password
+phone_number : 1234567890

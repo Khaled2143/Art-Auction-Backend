@@ -3,6 +3,8 @@ from datetime import date
 from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
+USER_ID = 'user.id'
+
 @dataclass
 class ArtWork(db.Model):
     __tablename__ = 'art_work'
@@ -12,8 +14,8 @@ class ArtWork(db.Model):
     title: str = db.Column(db.String(50), nullable=False)
     starting_price: float = db.Column(db.Float, nullable=False)
     current_bid: float = db.Column(db.Float, nullable=False)
-    user_id: int = db.Column(db.Integer, db.ForeignKey('artist.id'), nullable=False)
-    current_bidder_id: int = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id: int = db.Column(db.Integer, db.ForeignKey(USER_ID), nullable=False)
+    current_bidder_id: int = db.Column(db.Integer, db.ForeignKey(USER_ID))
 
     #make get_art_work_by_id() method
 
@@ -26,15 +28,17 @@ class User(db.Model):
     email: str = db.Column(db.String(50), nullable=False)
     phone_number: str = db.Column(db.String(50), nullable=False)
 
-    art_works = db.relationship('ArtWork', backref='user', lazy=True)
+    art_works = db.relationship('ArtWork', backref='user', lazy=True, foreign_keys=[ArtWork.user_id])
+    bidded_art_works = db.relationship('ArtWork', backref='current_bidder', lazy=True, foreign_keys=[ArtWork.current_bidder_id])
     purchases = db.relationship('Purchase', backref='user', lazy=True)
+
 
 @dataclass
 class Purchase(db.Model):
     __tablename__= 'purchase'
     id = db.Column(db.Integer,primary_key=True)
-    title: str = db.Column(db.String(50), db.ForeignKey('artwork.title'), nullable=False)
-    purchase_date = db.Column(db.DateTime, default = date.utcnow, nullable=False)
+    title: str = db.Column(db.String(50), db.ForeignKey('art_work.title'), nullable=False)
+    purchase_date = db.Column(db.Date, nullable=False)
     purchase_price: float = db.Column(db.Float, nullable=False)
-    artwork_id: int = db.Column(db.Integer, db.ForeignKey('artwork.id'), nullable=False)
-    user_id: int = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    artwork_id: int = db.Column(db.Integer, db.ForeignKey('art_work.id'), nullable=False)
+    user_id: int = db.Column(db.Integer, db.ForeignKey(USER_ID), nullable=False)
