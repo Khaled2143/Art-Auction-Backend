@@ -1,13 +1,13 @@
 from flask import Flask
 from flask_cors import CORS
-from werkzeug.security import generate_password_hash
+import secrets
 
 
 
 def create_app():
     app = Flask(__name__)
     CORS(app)
-    app.config['SECRET_KEY'] = 'secret-key-goes-here'
+    app.config['SECRET_KEY'] = secrets.token_urlsafe(16)
     app.config['TESTING'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///art_auction.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
