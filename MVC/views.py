@@ -1,30 +1,32 @@
 from flask import request, jsonify
+
 from datetime import date
 from werkzeug.utils import secure_filename
-import os
-from MVC.models import Artist
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import logout_user, login_user
+import secrets
+
 from MVC.models import ArtWork
-from MVC.models import Buyer
+from MVC.models import User
+from MVC.models import Purchase
 
-def place_bid(artwork_id, buyer_id, bid_amount):
+def place_bid(artwork_id, user_id, bid_amount):
     artwork = get_artwork_by_id(artwork_id)
-
-    
 
     if not artwork:
         return jsonify({'message': 'Artwork not found!'})
-    
-    buyer = get_buyer_by_id(buyer_id)
+
+    user = get_user_by_id(user_id)
 
     # if not buyer:
     #     return jsonify({'message': 'Buyer not found!'})
-    
+
     bid_amount = float(bid_amount)
 
     if bid_amount <= artwork.current_bid:
         return jsonify({'message': 'Bid amount should be greater than the current price!'})
-    
-    artwork.buyer = buyer
+
+    artwork.user = user
     artwork.current_bid = bid_amount
 
     from MVC.models import db
@@ -32,24 +34,51 @@ def place_bid(artwork_id, buyer_id, bid_amount):
 
     return jsonify({'message': 'Bid placed successfully!'})
 
+# login request
+
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+
+    # loads user 
+    user = User.query.filter_by(username=username).first()
+    ## FIX ## password = # add token here
+
+    if user and check_password_hash(user.password_hash, password):
+        response = {"message": "Login successful"}
+        session['username'] = user.username # Store the username in the session
+        return jsonify(response), 200
+    else:
+        response = {"message": "Invalid credentials"}
+        return jsonify(response), 401
     
+def logout():
+    def logout():
+        session.pop('username', None)
+        return jsonify({"message": "Logout successful"}), 200
+
+
 
 # Get Requests
 
-def get_artist():
-    return Artist.query.all()
+def get_user():
+    return User.query.all()
+
+def get_user_by_id(id):
+    return User.query.filter_by(id=id).first()
+
+def get_user_by_username(username):
+    return User.query.filter_by(username=username).first()
 
 def get_artwork():
     return ArtWork.query.all()
 
-def get_buyer():
-    return Buyer.query.all()
-
 def get_artwork_by_id(id):
     return ArtWork.query.filter_by(id=id).first()
 
-def get_artwork_by_artist(artist):
-    return ArtWork.query.filter_by(artist=artist).all()
+def get_artwork_by_user(username):
+    return ArtWork.query.filter_by(username=username).all()
 
 def get_artwork_by_title(title):
     return ArtWork.query.filter_by(title=title).all()
@@ -60,17 +89,13 @@ def get_artwork_by_price(price):
 def get_artwork_by_creation_date(creation_date):
     return ArtWork.query.filter_by(creation_date=creation_date).all()
 
-def get_artist_by_id(id):
-    return Artist.query.filter_by(id=id).first()
+def get_purchases():
+    return Purchase.query.all()
 
-def get_artist_by_name(name):
-    return Artist.query.filter_by(name=name).first()
+def get_purchase_by_id():
+    return Purchase.query.filter_by(id=id).first()
 
-def get_buyer_by_id(id):
-    return Buyer.query.filter_by(buyer_id=id).first()
-
-def get_buyer_by_name(name):
-    return Buyer.query.filter_by(name=name).first()
+# def get_purchases_by_date()
 
 
 
@@ -83,22 +108,11 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Add Artist
-def add_artist():
-    artist_data = request.get_json()
-    artist = Artist(name=artist_data['name'], email=artist_data['email'], phone_number=artist_data['phone_number'])
-
-    from MVC.models import db
-    db.session.add(artist)
-    db.session.commit()
-
-    return jsonify({'message': 'Artist added successfully!'})
-
 # Add Artwork
 def add_artwork():
     artwork_data = request.form.to_dict()
     
-    artist = Artist.query.filter_by(name=artwork_data['artist']).first()
+    user = User.query.filter_by(name=artwork_data['user']).first()
 
     image = request.files['image']
     if image and allowed_file(image.filename):
@@ -110,11 +124,9 @@ def add_artwork():
         artwork_data['image'] = filepath
 
     artwork = ArtWork(title=artwork_data['title'],
-                      artist=artist, creation_date=date.today(),
-                      starting_price=artwork_data['price'], 
+                      user=user, creation_date=date.today(),
+                      starting_price=artwork_data['price'],
                       current_bid=artwork_data['price'],
-                      description=artwork_data['description'], 
-                      dimension=artwork_data['dimension'], 
                       image=artwork_data['image'])
 
     from MVC.models import db
@@ -123,15 +135,63 @@ def add_artwork():
 
     return jsonify({'message': 'Artwork added successfully!'})
 
-# Add Buyer  
-def add_buyer():
-    buyer_data = request.get_json()
 
-    buyer = Buyer(username=buyer_data['name'], email=buyer_data['email'], phone_number=buyer_data['phone_number'])
-    
-    from MVC.models import db
-    db.session.add(buyer)
+
+# Add User
+def add_user():
+    user_data = request.get_json()
+
+    # check if the  username is in the database
+    user = User.query.filter_by(name=user_data['user']).first()
+
+    # Check if username exists in DB
+    def check_username():
+        # from MVC.models import db, User (is this needed?)
+        user_data = request.get_json()
+        username = user_data.get('username')
+
+        # Check if the username exists in the database
+        user = User.query.filter_by(name=user_data['user']).first()
+
+        if user:
+            response = {"exists": True}
+        else:
+            response = {"exists": False}
+        return jsonify(response)
+
+    if 'username' not in user_data or 'password' not in user_data:
+        return jsonify({"message": "Username and password are required"}), 400
+    elif user_data.check_username() == True:
+        return jsonify({"message" : "This Username is already in use"}), 400
+
+    username = user_data['username']
+    password = user_data['password']
+    hashed_password = generate_password_hash(password)  # Hash the password
+
+    new_user = User(username=username, password_hash=hashed_password)
+    db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({'message': 'Buyer added successfully!'})
+    return jsonify({"message": "User created successfully"}), 201
+
+
+
+# Add Purchase
+def add_purchase():
+    purchase_data = request.get_json
+    user = User.query.filter_by(name=purchase_data['user']).first()
+
+    title = purchase_data['title']
+    purchase_date = purchase_data['purchase_data']
+    purchase_price = purchase_data['purchase_price']
+    artwork_id = purchase_data['artwork_id']
+    user_id = purchase_data['user_id']
+
+    new_purchase = Purchase(title=purchase_data['title'],
+                            user=user, purchase_date=purchase_data['purchase_date'],
+                            purchase_price=purchase_data['purchase_price'],
+                            artwork_id=purchase_data['artwork_id'])
+    
+    db.session.add(new_purchase)
+    db.session.commit()
 
