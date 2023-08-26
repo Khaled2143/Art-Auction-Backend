@@ -50,7 +50,7 @@ def place_bid(artwork_id):
 
     return jsonify({'message': 'Bid placed successfully!'})
 
-# login request
+### login request
 
 def login():
     data = request.form.to_dict()
@@ -77,7 +77,7 @@ def logout():
 
 
 
-# Get Requests
+### Get Requests
 
 def get_users():
     users = User.query.all()
@@ -122,11 +122,7 @@ def get_purchases():
 def get_purchase_by_id():
     return Purchase.query.filter_by(id=id).first()
 
-# def get_purchases_by_date()
-
-
-
-# Post Requests
+### Post Requests
 
 UPLOAD_FOLDER = 'uploaded_images'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
@@ -135,7 +131,8 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Add Artwork
+
+### Add Artwork
 def add_artwork():
 
     if not session.get('username'):
@@ -168,7 +165,7 @@ def add_artwork():
 
 
 
-# Add User
+### Add User
 def add_user():
     user_data = request.form.to_dict()
 

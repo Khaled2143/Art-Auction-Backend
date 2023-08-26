@@ -5,6 +5,7 @@ db = SQLAlchemy()
 
 USER_ID = 'user.id'
 
+### ArtWork Entity
 @dataclass
 class ArtWork(db.Model):
     __tablename__ = 'art_work'
@@ -17,8 +18,9 @@ class ArtWork(db.Model):
     user_id: int = db.Column(db.Integer, db.ForeignKey(USER_ID), nullable=False)
     current_bidder_id: int = db.Column(db.Integer, db.ForeignKey(USER_ID))
 
-    #make get_art_work_by_id() method
 
+
+### User Entity
 @dataclass
 class User(db.Model):
     __tablename__ = 'user'
@@ -33,6 +35,7 @@ class User(db.Model):
     purchases = db.relationship('Purchase', backref='user', lazy=True)
 
 
+### Purchase Entity
 @dataclass
 class Purchase(db.Model):
     __tablename__= 'purchase'

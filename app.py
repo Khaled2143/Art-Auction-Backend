@@ -2,8 +2,6 @@ from flask import Flask
 from flask_cors import CORS
 import secrets
 
-
-
 def create_app():
     app = Flask(__name__)
     CORS(app)
@@ -20,10 +18,10 @@ def create_app():
     from MVC import views
 
     app.add_url_rule('/users', view_func=views.get_users)
+    app.add_url_rule('/users/<username>', view_func=views.get_user_by_username)
     app.add_url_rule('/artworks', view_func=views.get_artwork)
     app.add_url_rule('/artworks/<id>', view_func=views.get_artwork_by_id)
     app.add_url_rule('/purchases', view_func=views.get_purchases)
-    # app.add_url_rule('/purchases/<id>', view_func=views.get_purchases_by_id)
     app.add_url_rule('/add-user', view_func=views.add_user, methods=['POST'])
     app.add_url_rule('/add-artwork', view_func=views.add_artwork, methods=['POST'])
     app.add_url_rule('/place-bid/<artwork_id>', view_func=views.place_bid, methods=['POST']) ## Change based on frontend

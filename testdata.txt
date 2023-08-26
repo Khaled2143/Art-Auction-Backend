@@ -1,15 +1,16 @@
 
 {
-    "name" : "Pablo Picasso", 
+    "username" : "Pablo Picasso",
+	"password_hash" : "password",
     "email" : "example@123.com",
     "phone_number" : "1234567890"
 }
 
 {
-    title:The Old Guitarist
-    price:1000000
-    image:image
-    user:Pablo Picasso
+    "title":"The Old Guitarist",
+    "price":"1000000",
+    "image":"image",
+    "user":"Pablo Picasso"
 }
 
 username : my-user
