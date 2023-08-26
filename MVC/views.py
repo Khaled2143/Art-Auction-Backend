@@ -10,17 +10,20 @@ from MVC.models import User
 from MVC.models import Purchase
 from MVC.models import db
 
-def place_bid(artwork_id, user_id, bid_amount):
+def place_bid(artwork_id):
 
     if not session.get('username'):
         return jsonify({'message': 'You need to be logged in to place a bid!'})
 
     artwork = get_artwork_by_id(artwork_id)
 
+    data = request.get_json()
+    bid_amount = data.get('bid_amount')
+
     if not artwork:
         return jsonify({'message': 'Artwork not found!'})
 
-    user = get_user_by_id(user_id)
+    user = get_user_by_username(session.get('username'))
 
     if artwork.user == user:
         return jsonify({'message': 'You cannot bid on your own artwork!'})
@@ -42,7 +45,7 @@ def place_bid(artwork_id, user_id, bid_amount):
     purchase = Purchase(title=artwork.title, user=user, purchase_date=date.today(), purchase_price=bid_amount, artwork_id=artwork_id)
     user.purchases.append(purchase)
     artwork.current_bid = bid_amount
-    artwork.current_bidder_id = user_id
+    artwork.current_bidder_id = user.id
     db.session.commit()
 
     return jsonify({'message': 'Bid placed successfully!'})
@@ -56,9 +59,11 @@ def login():
 
     # loads user 
     user = get_user_by_username(username)
-    email = get_user_by_email(data.get('email'))
 
-    if (user or email) and check_password_hash(user.password_hash, password):
+    if not user:
+        user = get_user_by_email(username)
+
+    if user and check_password_hash(user.password_hash, password):
         response = {"message": "Login successful"}
         session['username'] = user.username # Store the username in the session
         return jsonify(response), 200
@@ -74,10 +79,24 @@ def logout():
 
 # Get Requests
 
-def get_user():
-    return User.query.all()
+def get_users():
+    users = User.query.all()
+
+    # Convert user instances to a list of dictionaries
+    users_list = []
+    for user in users:
+        user_dict = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'phone_number': user.phone_number
+            # Add more attributes as needed
+        }
+        users_list.append(user_dict)
+    return users_list
 
 def get_user_by_id(id):
+    
     return User.query.filter_by(id=id).first()
 
 def get_user_by_username(username):
@@ -92,19 +111,12 @@ def get_artwork():
 def get_artwork_by_id(id):
     return ArtWork.query.filter_by(id=id).first()
 
-def get_artwork_by_user(username):
-    return ArtWork.query.filter_by(username=username).all()
-
-def get_artwork_by_title(title):
-    return ArtWork.query.filter_by(title=title).all()
-
-def get_artwork_by_price(price):
-    return ArtWork.query.filter_by(price=price).all()
-
 def get_artwork_by_creation_date(creation_date):
     return ArtWork.query.filter_by(creation_date=creation_date).all()
 
 def get_purchases():
+    if not session.get('username'):
+        return jsonify({'message': 'You need to be logged in to view purchases!'})
     return Purchase.query.all()
 
 def get_purchase_by_id():
