@@ -1,4 +1,4 @@
-from flask import request, session, jsonify
+from flask import request, send_from_directory, session, jsonify
 import os
 from datetime import date
 from werkzeug.utils import secure_filename
@@ -13,7 +13,7 @@ from MVC.models import db
 def place_bid(artwork_id):
 
     if not session.get('username'):
-        return jsonify({'message': 'You need to be logged in to place a bid!'})
+        return jsonify({'message': 'You need to be logged in to place a bid!'}), 401
 
     artwork = get_artwork_by_id(artwork_id)
 
@@ -21,17 +21,17 @@ def place_bid(artwork_id):
     bid_amount = data.get('bid_amount')
 
     if not artwork:
-        return jsonify({'message': 'Artwork not found!'})
+        return jsonify({'message': 'Artwork not found!'}), 404
 
     user = get_user_by_username(session.get('username'))
 
     if artwork.user == user:
-        return jsonify({'message': 'You cannot bid on your own artwork!'})
+        return jsonify({'message': 'You cannot bid on your own artwork!'}), 400
 
     bid_amount = float(bid_amount)
 
     if bid_amount <= artwork.current_bid:
-        return jsonify({'message': 'Bid amount should be greater than the current price!'})
+        return jsonify({'message': 'Bid amount should be greater than the current price!'}), 400
     
     prev_Winner = None
     if artwork.current_bidder_id:
@@ -48,7 +48,7 @@ def place_bid(artwork_id):
     artwork.current_bidder_id = user.id
     db.session.commit()
 
-    return jsonify({'message': 'Bid placed successfully!'})
+    return jsonify({'message': 'Bid placed successfully!'}), 200
 
 ### login request
 
@@ -106,17 +106,64 @@ def get_user_by_email(email):
     return User.query.filter_by(email=email).first()
 
 def get_artwork():
-    return ArtWork.query.all()
+    art_works = ArtWork.query.all()
+
+    # Convert user instances to a list of dictionaries
+    art_works_list = []
+    for art_work in art_works:
+        art_work_dict = {
+            'id': art_work.id,
+            'title': art_work.title,
+            'creation_date': art_work.creation_date,
+            'image': art_work.image,
+            'current_bid': art_work.current_bid,
+            'artist_name': art_work.user.username,
+        }
+        art_works_list.append(art_work_dict)
+
+    return art_works_list, 200
+
+def get_featured_artwork():
+    art_works = ArtWork.query.all()
+
+    # Convert user instances to a list of dictionaries
+    art_works_list = []
+    for art_work in art_works:
+        art_work_dict = {
+            'id': art_work.id,
+            'image': art_work.image,
+        }
+        art_works_list.append(art_work_dict)
+
+    return art_works_list[:4], 200
 
 def get_artwork_by_id(id):
-    return ArtWork.query.filter_by(id=id).first()
+    artwork = ArtWork.query.filter_by(id=id).first()
+    if not artwork:
+        return jsonify({'message': 'Artwork not found!'}), 404
+    
+    user = get_user_by_id(artwork.user_id)
+    
+    artwork_dict = {
+        'id': artwork.id,
+        'title': artwork.title,
+        'creation_date': artwork.creation_date,
+        'image': artwork.image,
+        'current_bid': artwork.current_bid,
+        'artist_name': user.username,
+    }
+
+    return artwork_dict, 200
+
+def get_image(image_filename):
+    return send_from_directory('uploaded_images', image_filename)
 
 def get_artwork_by_creation_date(creation_date):
     return ArtWork.query.filter_by(creation_date=creation_date).all()
 
 def get_purchases():
     if not session.get('username'):
-        return jsonify({'message': 'You need to be logged in to view purchases!'})
+        return jsonify({'message': 'You need to be logged in to view purchases!'}), 401
     return Purchase.query.all()
 
 def get_purchase_by_id():
@@ -136,7 +183,7 @@ def allowed_file(filename):
 def add_artwork():
 
     if not session.get('username'):
-        return jsonify({'message': 'You need to be logged in to add an artwork!'})
+        return jsonify({'message': 'You need to be logged in to add an artwork!'}), 401
     
     username = session.get('username')
 
@@ -151,7 +198,9 @@ def add_artwork():
         if not os.path.exists(UPLOAD_FOLDER):
             os.makedirs(UPLOAD_FOLDER)
         image.save(filepath)
-        artwork_data['image'] = filepath
+
+        image_url = request.url_root + 'images/' + filename
+        artwork_data['image'] = image_url
 
     artwork = ArtWork(title=artwork_data['title'],
                       user=user, creation_date=date.today(),
@@ -161,7 +210,7 @@ def add_artwork():
     db.session.add(artwork)
     db.session.commit()
 
-    return jsonify({'message': 'Artwork added successfully!'})
+    return jsonify({'message': 'Artwork added successfully!'}), 201
 
 
 
