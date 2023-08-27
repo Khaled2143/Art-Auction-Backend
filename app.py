@@ -4,7 +4,7 @@ import secrets
 
 def create_app():
     app = Flask(__name__)
-    CORS(app)
+    CORS(app, origins=['http://localhost:3000'], supports_credentials=True)
     app.config['SECRET_KEY'] = secrets.token_urlsafe(16)
     app.config['TESTING'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///art_auction.db'
@@ -29,5 +29,6 @@ def create_app():
     app.add_url_rule('/place-bid/<artwork_id>', view_func=views.place_bid, methods=['POST']) ## Change based on frontend
     app.add_url_rule('/login', view_func=views.login, methods=['POST'])
     app.add_url_rule('/logout', view_func=views.logout, methods=['POST'])
+    app.add_url_rule('/check-auth', view_func=views.check_auth, methods=['POST'])
 
     return app

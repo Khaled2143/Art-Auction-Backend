@@ -50,32 +50,6 @@ def place_bid(artwork_id):
 
     return jsonify({'message': 'Bid placed successfully!'}), 200
 
-### login request
-
-def login():
-    data = request.form.to_dict()
-    username = data.get('username')
-    password = data.get('password')
-
-    # loads user 
-    user = get_user_by_username(username)
-
-    if not user:
-        user = get_user_by_email(username)
-
-    if user and check_password_hash(user.password_hash, password):
-        response = {"message": "Login successful"}
-        session['username'] = user.username # Store the username in the session
-        return jsonify(response), 200
-    else:
-        response = {"message": "Invalid credentials"}
-        return jsonify(response), 401
-    
-def logout():
-    session.pop('username', None)
-    return jsonify({"message": "Logout successful"}), 200
-
-
 
 ### Get Requests
 
@@ -171,6 +145,42 @@ def get_purchase_by_id():
 
 ### Post Requests
 
+def check_auth():
+    if 'username' in session and session['username'] != '':
+        print(session['username'])
+        return jsonify({'authenticated': True}), 200
+    else:
+        print('not authenticated')
+        return jsonify({'authenticated': False}), 200
+
+
+### login request
+
+def login():
+    data = request.form.to_dict()
+    username = data.get('username')
+    password = data.get('password')
+
+    # loads user 
+    user = get_user_by_username(username)
+
+    if not user:
+        user = get_user_by_email(username)
+
+    if user and check_password_hash(user.password_hash, password):
+        response = {"message": "Login successful"}
+        session['username'] = user.username # Store the username in the session
+        return jsonify(response), 200
+    else:
+        response = {"message": "Invalid credentials"}
+        return jsonify(response), 401
+    
+def logout():
+    session.pop('username', None)
+    return jsonify({"message": "Logout successful"}), 200
+
+### Add Artwork
+
 UPLOAD_FOLDER = 'uploaded_images'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
@@ -178,8 +188,6 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
-### Add Artwork
 def add_artwork():
 
     if not session.get('username'):
