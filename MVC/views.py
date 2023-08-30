@@ -1,6 +1,6 @@
 from flask import request, send_from_directory, session, jsonify
 import os
-from datetime import date
+from datetime import date, datetime, timedelta
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -16,6 +16,9 @@ def place_bid(artwork_id):
         return jsonify({'message': 'You need to be logged in to place a bid!'}), 401
 
     artwork = get_artwork_by_id(artwork_id)
+
+    if not artwork.available:
+        return jsonify({'message': 'Auction is closed!'}), 400
 
     data = request.get_json()
     bid_amount = data.get('bid_amount')
@@ -33,12 +36,12 @@ def place_bid(artwork_id):
     if bid_amount <= artwork.current_bid:
         return jsonify({'message': 'Bid amount should be greater than the current price!'}), 400
     
-    prev_Winner = None
+    prev_winner = None
     if artwork.current_bidder_id:
-        prev_Winner = get_user_by_id(artwork.current_bidder_id)
+        prev_winner = get_user_by_id(artwork.current_bidder_id)
     
-    if prev_Winner:
-        prev_purchase = Purchase.query.filter_by(artwork_id=artwork_id, user_id=prev_Winner.id).first()
+    if prev_winner:
+        prev_purchase = Purchase.query.filter_by(artwork_id=artwork_id, user_id=prev_winner.id).first()
         if prev_purchase:
             db.session.delete(prev_purchase)
     
@@ -79,23 +82,23 @@ def get_user_by_username(username):
 def get_user_by_email(email):
     return User.query.filter_by(email=email).first()
 
-def get_artwork():
-    art_works = ArtWork.query.all()
+def get_artworks():
+    art_works = ArtWork.query.filter_by(available=True).all()
 
     # Convert user instances to a list of dictionaries
     art_works_list = []
     for art_work in art_works:
         art_work_dict = {
             'id': art_work.id,
-            'title': art_work.title,
-            'creation_date': art_work.creation_date,
             'image': art_work.image,
-            'current_bid': art_work.current_bid,
-            'artist_name': art_work.user.username,
         }
         art_works_list.append(art_work_dict)
 
     return art_works_list, 200
+
+def get_all_artworks():
+    art_works = ArtWork.query.all()
+    return art_works
 
 def get_featured_artwork():
     art_works = ArtWork.query.all()
@@ -117,6 +120,9 @@ def get_artwork_by_id(id):
         return jsonify({'message': 'Artwork not found!'}), 404
     
     user = get_user_by_id(artwork.user_id)
+
+    remaining_time = artwork.end_time - datetime.now()
+    remaining_seconds = max(remaining_time.total_seconds(), 0)
     
     artwork_dict = {
         'id': artwork.id,
@@ -125,6 +131,8 @@ def get_artwork_by_id(id):
         'image': artwork.image,
         'current_bid': artwork.current_bid,
         'artist_name': user.username,
+        'available': artwork.available,
+        'remaining_time': remaining_seconds,
     }
 
     return artwork_dict, 200
@@ -210,11 +218,14 @@ def add_artwork():
         image_url = request.url_root + 'images/' + filename
         artwork_data['image'] = image_url
 
+    end_time = datetime.now() + timedelta(minutes=5)
+
     artwork = ArtWork(title=artwork_data['title'],
                       user=user, creation_date=date.today(),
                       starting_price=artwork_data['price'],
                       current_bid=artwork_data['price'],
-                      image=artwork_data['image'])
+                      image=artwork_data['image'], 
+                      available=True, end_time=end_time)
     db.session.add(artwork)
     db.session.commit()
 
@@ -246,4 +257,7 @@ def add_user():
 
     return jsonify({"message": "User created successfully"}), 201
 
+
+
+### misc
 

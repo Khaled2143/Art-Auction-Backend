@@ -15,6 +15,9 @@ class ArtWork(db.Model):
     title: str = db.Column(db.String(50), nullable=False)
     starting_price: float = db.Column(db.Float, nullable=False)
     current_bid: float = db.Column(db.Float, nullable=False)
+    available: bool = db.Column(db.Boolean, nullable=False)
+    end_time: date = db.Column(db.DateTime, nullable=False)
+    end_date: date = db.Column(db.Date, nullable=True)
     user_id: int = db.Column(db.Integer, db.ForeignKey(USER_ID), nullable=False)
     current_bidder_id: int = db.Column(db.Integer, db.ForeignKey(USER_ID))
 
